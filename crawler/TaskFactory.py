@@ -6,7 +6,7 @@ gevent.monkey.patch_all()
 
 import gevent
 from gevent.queue import Queue
-from abc import ABCMeta, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 import time
 
 class TaskFactory(object):
@@ -59,11 +59,11 @@ class TaskFactory(object):
     def __run(self, id, task):
         task['job'](id)
 
-class Task(object):
+class Task(ABC):
     '''
     Define the task interface so that task factory run normally.
     '''
-    
+
     @property
     @abstractmethod
     def name(self):
@@ -71,14 +71,16 @@ class Task(object):
         
     @name.setter
     @abstractmethod
-    def name(self):
+    def name(self, value):
         pass
     
 class MyTask(Task):
+    _name = ''
+
     @property
     def name(self):
         return self._name
-        
+    @name.setter
     def name(self, value):
         self._name = value
         
@@ -96,7 +98,7 @@ if __name__ == '__main__':
     #f = TaskFactory()
     #gevent.joinall([gevent.spawn(task_producer, i, f) for i in range(100)])
     task = MyTask()
-    task.name = 'lixijiang'
+    #task.name = 'lixijiang'
     
     print(task.name)
     
