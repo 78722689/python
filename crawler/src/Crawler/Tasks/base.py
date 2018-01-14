@@ -29,6 +29,7 @@ class TaskFactory(object):
         # and no more available routines can be switched when gevent scheduling.
         # SO, if you have others routine in implementation and it will not in waiting to ensure gevent schedule successfully, you can join the following routines here.
         # Or, no join here but sleep in main routine to ensure the following routines finishing its job.
+        gevent.spawn(self.manager())
         [gevent.spawn(self.worker, i) for i in range(self.coroutine_number)]
         
     def put_task(self, task):
@@ -48,7 +49,9 @@ class TaskFactory(object):
         print('woker id-%d started' % id)
 
         while True:
+            print('worker id-%d is free currently.' % id)
             task = self.task_queue.get()
+            print('worker id-%d received task [%s]' % (id,task.name))
             try:
                 t = gevent.spawn(self.__run, id, task)
                 t.join(task.timeout)
