@@ -4,14 +4,17 @@ from Crawler.crawler import crawler_singleton
 from Crawler.HTMLHandler.htmlparser import Parser
 
 import urllib3
-urllib3.disable_warnings()
+#urllib3.disable_warnings()
+import socket
 
 class HTMLRequest(Task):
-    http = urllib3.PoolManager()
-
+    #http = urllib3.PoolManager()
+    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
+    
     def __init__(self, url):
         self.__url = url
         self.__name = 'HTMLReuest'
+        self.__timeout = 20
 
     @property
     def name(self):
@@ -19,18 +22,31 @@ class HTMLRequest(Task):
 
     @property
     def timeout(self):
-        pass
+        return self.__timeout
 
     @property
     def job(self):
         return self.__job_handler
 
+    def __byte_2_str(self, data, encoding=[]):
+        charsets = ['gbk', 'utf8', 'gb2312', 'ansi']
+        for item in encoding + charsets:
+            try:
+                result = data.decode(item, 'ignore')
+                return result
+            except:
+                print('Decoding content fail.')
+        
     def __job_handler(self, id):
         try:
             header = {'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}
-            with HTMLRequest.http.request('GET', self.__url, headers=header, timeout = 10, preload_content=False, decode_content=True) as r:
-
-                task = PageHandler(r.data.decode('utf-8', 'ignore'))
+            with HTMLRequest.http.request('GET', self.__url, headers=header, timeout = 20, redirect=False, preload_content=False, decode_content=True) as r:
+                print('status=%s' % r.status)
+                if r.status != 200:
+                    print('Received error-code %d when request to URL %s' % (r.status, self.__url))
+                    return
+                
+                task = PageHandler(self.__byte_2_str(r.data, [r.headers['content-type'].split('charset=')[1]]))
                 crawler_singleton.put_task(task)
         except Exception as err:
             print('Request to url(%s) fail, %s' % (self.__url, err))
