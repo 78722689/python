@@ -6,6 +6,7 @@ gevent.monkey.patch_all()
 
 import gevent
 from gevent.queue import Queue
+from gevent.lock import BoundedSemaphore
 from abc import ABC, ABCMeta, abstractmethod
 import time
 
@@ -18,7 +19,10 @@ class TaskFactory(object):
     
     def __init__(self, max_task_queue_size=2048, coroutine_number=1024, start=True):
         self.task_queue = Queue(max_task_queue_size)
-        self.coroutine_number = coroutine_number
+        self.__coroutine_number = coroutine_number
+        self.__free_workers = 0
+        self.__sem = BoundedSemaphore(1)
+
         if start:
             self.start()
            
@@ -30,7 +34,7 @@ class TaskFactory(object):
         # SO, if you have others routine in implementation and it will not in waiting to ensure gevent schedule successfully, you can join the following routines here.
         # Or, no join here but sleep in main routine to ensure the following routines finishing its job.
         gevent.spawn(self.manager())
-        [gevent.spawn(self.worker, i) for i in range(self.coroutine_number)]
+        [gevent.spawn(self.worker, i) for i in range(self.__coroutine_number)]
         
     def put_task(self, task):
         if isinstance(task, Task):
@@ -50,14 +54,23 @@ class TaskFactory(object):
 
         while True:
             print('worker id-%d is free currently.' % id)
+            self.__free_workers += 1
+            print('Routine status, Free workers(%d), workers(%d) is working' % (
+            self.__free_workers, (self.__coroutine_number - self.__free_workers)))
             task = self.task_queue.get()
             print('worker id-%d received task [%s]' % (id,task.name))
+
+            self.__sem.acquire()
+            self.__free_workers -= 1
+            self.__sem.release()
+
             try:
                 t = gevent.spawn(self.__run, id, task)
                 t.join(task.timeout)
                 
                 # Try to re-raise the exception
                 t.get()
+                #self.__run(id, task)
             except Exception as err:
                 print('worker id-%d try to run task fail, %s' % (id, err))
             

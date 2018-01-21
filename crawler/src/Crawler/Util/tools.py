@@ -10,7 +10,6 @@ def get_host_ip(url):
             return host_ip
         except:
             print('No host IP found in url %s' % url)
-            return ''
 
     return ''
 
