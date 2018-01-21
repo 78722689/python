@@ -3,7 +3,8 @@ from Crawler.Util.tools import *
 from Crawler import crawler
 
 class Parser():
-    def __init__(self, page, host, url):
+    def __init__(self, id, page, host, url):
+        self.__id = id
         self.__soup = bs(page, 'lxml')
         self.__host = host
         self.__current_url = url
@@ -15,7 +16,7 @@ class Parser():
         :return: False;True
         '''
         host_ip = get_host_ip(url)
-        print('__host(%s) == host_ip(%s)' % (self.__host,host_ip))
+        print('Worker-%d, checking host(%s) VS host(%s)' % (self.__id, self.__host,host_ip))
         
         return [False, True][self.__host == host_ip]
 
@@ -42,18 +43,19 @@ class Parser():
         return False
     
     def parse(self):
-        print(self.__soup.title)
-        print('==host=%s' % self.__host)
+        #print(self.__soup.title)
+        print('Worker-%d, begin to parse page %s(host=%s)' % (self.__id, self.__current_url,self.__host))
+        print('Worker-%d, urls=%d' % (self.__id,len(self.__soup.find_all('a'))))
 
-        # Find out all URLs from looping tags of 'a'
+              # Find out all URLs from looping tags of 'a'
         for link in self.__soup.find_all('a'):
             url = link.get('href')
-            print('Checking.....%s' % url)
+            print('Worker-%d, found url %s in page, checking...' % (self.__id, url))
             
             need_continue = False
             # Check whether the host of this link is the target host
             if self.__is_a_module_of_current_url(url):
-                print('Found %s' % url)
+                print('Worker-%d, found module url %s in page' % (self.__id, url))
                 need_continue = True
                 if self.__is_contain_injection_character(url):
                     from .tasks import Injection
@@ -61,7 +63,7 @@ class Parser():
                     crawler.crawler_singleton.put_task(injection)
 
             elif self.__is_target_host(url):
-                print('Found module URL %s' % url)
+                print('Worker-%d, found target url %s in page' % (self.__id, url))
                 need_continue = True
                 if self.__is_contain_injection_character(url):
                     from .tasks import Injection
@@ -69,7 +71,7 @@ class Parser():
                     crawler.crawler_singleton.put_task(injection)
 
             if need_continue:
-                print('HTTPRequest task send for url %s.....' % url)
+                print('Worker-%d, craete HTTPRequest for url %s.....' % (self.__id, url))
                 from .tasks import HTMLRequest
                 r = HTMLRequest(url)
                 crawler.crawler_singleton.put_task(r)

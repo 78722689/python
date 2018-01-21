@@ -50,19 +50,19 @@ class TaskFactory(object):
         pass
         
     def worker(self, id):
-        print('woker id-%d started' % id)
+        print('woker-%d started' % id)
 
         while True:
-            print('worker id-%d is free currently.' % id)
+            print('worker-%d is free currently.' % id)
             self.__free_workers += 1
             print('Routine status, Free workers(%d), workers(%d) is working' % (
             self.__free_workers, (self.__coroutine_number - self.__free_workers)))
             task = self.task_queue.get()
-            print('worker id-%d received task [%s]' % (id,task.name))
+            print('worker-%d received task [%s].' % (id,task.name))
 
-            self.__sem.acquire()
+            #self.__sem.acquire()
             self.__free_workers -= 1
-            self.__sem.release()
+            #self.__sem.release()
 
             try:
                 t = gevent.spawn(self.__run, id, task)
@@ -70,9 +70,10 @@ class TaskFactory(object):
                 
                 # Try to re-raise the exception
                 t.get()
+                print('worker-%d task [%s] is done.' % (id,task.name))
                 #self.__run(id, task)
             except Exception as err:
-                print('worker id-%d try to run task fail, %s' % (id, err))
+                print('worker-%d try to run task fail, %s' % (id, err))
             
     def __run(self, id, task):
         return task.job(id)

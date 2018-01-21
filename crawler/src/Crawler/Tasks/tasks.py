@@ -70,20 +70,21 @@ class HTMLRequest(Task):
             print(self.__url, file=f)
             f.flush()
         #HTMLRequest.sem.release()
+        print('Worker-%d, try to request %s' % (id, self.__url))
 
         try:
             header = {'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}
             with HTMLRequest.http.request('GET', self.__url, headers=header, timeout = 20, redirect=False, preload_content=False, decode_content=True) as r:
-                print('status=%s' % r.status)
+                print('Worker-%d, HTTP request status=%s' % (id, r.status))
+
                 if r.status != 200:
-                    print('Received error-code %d when request to URL %s' % (r.status, self.__url))
+                    print('Worker-%d, received error-code %d when request to URL %s' % (id, r.status, self.__url))
                     return
                 
                 task = PageHandler(self.__byte_2_str(r.data, [r.headers['content-type'].split('charset=')[1]]), self.__host_ip, self.__url)
                 crawler_singleton.put_task(task)
         except Exception as err:
-            print('Request to url(%s) fail, %s' % (self.__url, err))
-
+            print('Worker-%d, request to url(%s) fail, %s' % (id, self.__url, err))
 
 class PageHandler(Task):
     def __init__(self, html, host, url):
@@ -105,9 +106,10 @@ class PageHandler(Task):
         return self.__job_handler
 
     def __job_handler(self, id):
-        print('In pagehandler===========')
-        parser = Parser(self.html, self.__host, self.__url)
+        print('Worker-%d, try to parse %s' % (id, self.__url))
+        parser = Parser(id, self.html, self.__host, self.__url)
         parser.parse()
+        print('Worker-%d, parse %s is done' % (id, self.__url))
 
 class Injection(Task):
     # Save the injection URLs in dictionary so that it will not be written to file twice.
