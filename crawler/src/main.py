@@ -7,7 +7,7 @@ from Crawler import crawler
 from Crawler.Tasks.tasks import *
 
 if __name__ == '__main__':
-    print('yyyy')
+
     request = HTMLRequest('http://www.zs.e21.edu.cn/ ')#('http://www.qdcdc.org:7004/main') #('http://127.0.0.1:8000/')
     crawler.crawler_singleton.put_task(request)
     #try:

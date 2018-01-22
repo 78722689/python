@@ -10,30 +10,20 @@ from gevent.lock import BoundedSemaphore
 import urllib3
 
 class HTMLRequest(Task):
-    http = urllib3.PoolManager()
-    #http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
+    #http = urllib3.PoolManager()
+    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
     
     # Save the URLs which have been accessed in the past
     # format{url:True}
     requested_urls = {}
 
-    sem = BoundedSemaphore(1)
+    #sem = BoundedSemaphore(1)
     
     def __init__(self, url, host_ip=''):
         self.__url = url
         self.__name = 'HTMLReuest'
         self.__timeout = 20
         self.__host_ip = get_host_ip(self.__url) if host_ip == '' else host_ip
-
-    #def __get_host_ip(self):
-    #    parts = urlparse(self.__url)
-    #    if parts.hostname is not None:
-    #        try:
-    #            host_ip = socket.gethostbyname(parts.hostname)
-    #            return host_ip
-    #        except:
-    #            print('No host IP found in url %s' % self.__url)
-    #            pass
 
     @property
     def name(self):
@@ -54,7 +44,7 @@ class HTMLRequest(Task):
                 result = data.decode(item, 'ignore')
                 return result
             except:
-                print('Decoding content fail.')
+                logger.error('Decoding content fail.')
         
     def __job_handler(self, id):
 
@@ -66,25 +56,25 @@ class HTMLRequest(Task):
         HTMLRequest.requested_urls.update({self.__url:True})
 
         # Test code
-        with open('E:\Programing\python\output\\requested_urls.txt', 'a+') as f:
+        with open('/mnt/python/crawler/output/requested_urls.txt', 'a+') as f: #('E:\Programing\python\output\\requested_urls.txt', 'a+') as f:
             print(self.__url, file=f)
             f.flush()
         #HTMLRequest.sem.release()
-        print('Worker-%d, try to request %s' % (id, self.__url))
+        logger.debug('Worker-%d, try to request %s', id, self.__url)
 
         try:
             header = {'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}
             with HTMLRequest.http.request('GET', self.__url, headers=header, timeout = 20, redirect=False, preload_content=False, decode_content=True) as r:
-                print('Worker-%d, HTTP request status=%s' % (id, r.status))
+                logger.debug('Worker-%d, HTTP request status=%s', id, r.status)
 
                 if r.status != 200:
-                    print('Worker-%d, received error-code %d when request to URL %s' % (id, r.status, self.__url))
+                    logger.debug('Worker-%d, received error-code %d when request to URL %s', id, r.status, self.__url)
                     return
                 
                 task = PageHandler(self.__byte_2_str(r.data, [r.headers['content-type'].split('charset=')[1]]), self.__host_ip, self.__url)
                 crawler_singleton.put_task(task)
         except Exception as err:
-            print('Worker-%d, request to url(%s) fail, %s' % (id, self.__url, err))
+            logger.debug('Worker-%d, request to url(%s) fail, %s', id, self.__url, err)
 
 class PageHandler(Task):
     def __init__(self, html, host, url):
@@ -106,10 +96,10 @@ class PageHandler(Task):
         return self.__job_handler
 
     def __job_handler(self, id):
-        print('Worker-%d, try to parse %s' % (id, self.__url))
+        logger.debug('Worker-%d, try to parse %s',id, self.__url)
         parser = Parser(id, self.html, self.__host, self.__url)
         parser.parse()
-        print('Worker-%d, parse %s is done' % (id, self.__url))
+        logger.debug('Worker-%d, parse %s is done', id, self.__url)
 
 class Injection(Task):
     # Save the injection URLs in dictionary so that it will not be written to file twice.
@@ -138,7 +128,7 @@ class Injection(Task):
         if Injection.all_inject_target_urls.get(self.__url) is not None: return
 
         # Write url to file for further injection analysis
-        with open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:
+        with open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f: #open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:
             print(self.__url, file=f)
             f.flush()
 
