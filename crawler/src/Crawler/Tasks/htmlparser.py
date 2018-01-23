@@ -44,14 +44,15 @@ class Parser():
     
     def parse(self):
         #print(self.__soup.title)
-        logger.debug('Worker-%d, begin to parse page %s(host=%s)', self.__id, self.__current_url,self.__host)
-        logger.debug('Worker-%d, urls=%d', self.__id,len(self.__soup.find_all('a')))
+        #logger.debug('Worker-%d, begin to parse page %s(host=%s)', self.__id, self.__current_url,self.__host)
+        #logger.debug('Worker-%d, urls=%d', self.__id,len(self.__soup.find_all('a')))
 
-              # Find out all URLs from looping tags of 'a'
+        index = 0
+        # Find out all URLs from looping tags of 'a'
         for link in self.__soup.find_all('a'):
             url = link.get('href')
-            logger.debug('Worker-%d, found url %s in page, checking...', self.__id, url)
-            
+            logger.debug('Worker-%d, found %d url %s in page, checking...', self.__id, index, url)
+            index += 1
             need_continue = False
             # Check whether the host of this link is the target host
             if self.__is_a_module_of_current_url(url):
@@ -71,7 +72,8 @@ class Parser():
                     crawler.crawler_singleton.put_task(injection)
 
             if need_continue:
-                logger.debug('Worker-%d, craete HTTPRequest for url %s.....', self.__id, url)
-                from .tasks import HTMLRequest
-                r = HTMLRequest(url)
-                crawler.crawler_singleton.put_task(r)
+                logger.debug('Worker-%d, Put message to dispatch for url %s.....', self.__id, url)
+                #from .tasks import HTMLRequest
+                #r = HTMLRequest(url)
+                #crawler.crawler_singleton.put_task(r)
+                crawler.crawler_singleton.put_message(url)

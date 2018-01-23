@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-import gevent.monkey
-gevent.monkey.patch_all()
 
 import gevent
 from gevent.queue import Queue
@@ -18,7 +16,8 @@ class TaskFactory(object):
     
     __metaclass__ = ABCMeta
     
-    def __init__(self, max_task_queue_size=2048, coroutine_number=1024, start=True):
+    def __init__(self, max_task_queue_size=1024, coroutine_number=1024, start=True):
+        self.__manage_queue = Queue(max_task_queue_size)
         self.task_queue = Queue(max_task_queue_size)
         self.__coroutine_number = coroutine_number
         self.__free_workers = 0
@@ -34,12 +33,20 @@ class TaskFactory(object):
         # and no more available routines can be switched when gevent scheduling.
         # SO, if you have others routine in implementation and it will not in waiting to ensure gevent schedule successfully, you can join the following routines here.
         # Or, no join here but sleep in main routine to ensure the following routines finishing its job.
-        gevent.spawn(self.manager())
+        gevent.spawn(self.manager)
         [gevent.spawn(self.worker, i) for i in range(self.__coroutine_number)]
-        
+
+    def wait_for_message(self):
+        msg = self.__manage_queue.get()
+        return msg
+
+    def put_message(self, msg):
+        self.__manage_queue.put(msg)
+
     def put_task(self, task):
         if isinstance(task, Task):
-            self.task_queue.put(task)
+            self.task_queue.put_nowait(task)
+            #self.__manage_queue.put(task)
         else:
             raise Exception('Input task is not an instance of class Task.')
     
@@ -217,12 +224,3 @@ def task_producer(i, factory):
 if __name__ == '__main__':
     f = TaskFactory()
     gevent.joinall([gevent.spawn(task_producer, i, f) for i in range(1)])
-    
-    
-
-  
-        
-    
-    
-
-

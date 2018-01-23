@@ -10,8 +10,8 @@ from gevent.lock import BoundedSemaphore
 import urllib3
 
 class HTMLRequest(Task):
-    #http = urllib3.PoolManager()
-    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
+    http = urllib3.PoolManager(num_pools=(1024))
+    #http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
     
     # Save the URLs which have been accessed in the past
     # format{url:True}
@@ -21,8 +21,8 @@ class HTMLRequest(Task):
     
     def __init__(self, url, host_ip=''):
         self.__url = url
-        self.__name = 'HTMLReuest'
-        self.__timeout = 20
+        self.__name = 'HTMLReuest,' + url
+        self.__timeout = 5
         self.__host_ip = get_host_ip(self.__url) if host_ip == '' else host_ip
 
     @property
@@ -51,16 +51,16 @@ class HTMLRequest(Task):
         #HTMLRequest.sem.acquire()
 
         # If url has been accessed, skip it.
-        if HTMLRequest.requested_urls.get(self.__url) is not None: return
+        #if HTMLRequest.requested_urls.get(self.__url) is not None: return
         # If no requested in the past, saving the URL so that to prevent the access in multi-times
-        HTMLRequest.requested_urls.update({self.__url:True})
+        #HTMLRequest.requested_urls.update({self.__url:True})
 
         # Test code
-        with open('/mnt/python/crawler/output/requested_urls.txt', 'a+') as f: #('E:\Programing\python\output\\requested_urls.txt', 'a+') as f:
-            print(self.__url, file=f)
-            f.flush()
+        #with ('E:\Programing\python\output\\requested_urls.txt', 'a+') as f:
+        #    print(self.__url, file=f)
+        #    f.flush()
         #HTMLRequest.sem.release()
-        logger.debug('Worker-%d, try to request %s', id, self.__url)
+        #logger.debug('Worker-%d, try to request %s', id, self.__url)
 
         try:
             header = {'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}
@@ -82,6 +82,7 @@ class PageHandler(Task):
         self.__name = 'PageHandler'
         self.__host = host
         self.__url = url
+        self.__timeout=3
 
     @property
     def name(self):
@@ -89,17 +90,17 @@ class PageHandler(Task):
 
     @property
     def timeout(self):
-        pass
+        return self.__timeout
 
     @property
     def job(self):
         return self.__job_handler
 
     def __job_handler(self, id):
-        logger.debug('Worker-%d, try to parse %s',id, self.__url)
+        #logger.debug('Worker-%d, try to parse %s',id, self.__url)
         parser = Parser(id, self.html, self.__host, self.__url)
         parser.parse()
-        logger.debug('Worker-%d, parse %s is done', id, self.__url)
+        #logger.debug('Worker-%d, parse %s is done', id, self.__url)
 
 class Injection(Task):
     # Save the injection URLs in dictionary so that it will not be written to file twice.
@@ -111,6 +112,7 @@ class Injection(Task):
     def __init__(self, url):
         self.__name = 'Injectction'
         self.__url = url
+        self.__timeout=3
 
     @property
     def name(self):
@@ -118,7 +120,7 @@ class Injection(Task):
 
     @property
     def timeout(self):
-        pass
+        return self.__timeout
 
     @property
     def job(self):
@@ -128,8 +130,8 @@ class Injection(Task):
         if Injection.all_inject_target_urls.get(self.__url) is not None: return
 
         # Write url to file for further injection analysis
-        with open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f: #open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:
-            print(self.__url, file=f)
-            f.flush()
+        #with open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:#open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f:
+        #    print(self.__url, file=f)
+        #    f.flush()
 
         Injection.all_inject_target_urls.update({self.__url:True})

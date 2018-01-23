@@ -7,8 +7,8 @@ import logging as logger
 logger.basicConfig(level=logger.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='/mnt/python/crawler/output/log.txt' #"D:\Tools\UbuntuDesktop\share\python\crawler\log\log.log"
-                    #filemode='w'
+                    filename='E:\Programing\python\output\log.log', #'/mnt/python/crawler/output/log.txt'
+                    filemode='w'
                     )
 # set up logging to console
 console = logger.StreamHandler()
@@ -26,7 +26,7 @@ def get_host_ip(url):
             host_ip = socket.gethostbyname(parts.hostname)
             return host_ip
         except:
-            loger.error('No host IP found in url %s', url)
+            logger.error('No host IP found in url %s', url)
 
     return ''
 
