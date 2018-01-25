@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup as bs
 from Crawler.Util.tools import *
 from Crawler import crawler
+from urllib.parse import urlparse
 
 class Parser():
     def __init__(self, id, page, host, url):
@@ -17,6 +18,7 @@ class Parser():
         '''
         host_ip = get_host_ip(url)
         logger.debug('Worker-%d, checking host(%s) VS host(%s)', self.__id, self.__host,host_ip)
+        if host_ip == '': return False
         
         return [False, True][self.__host == host_ip]
 
@@ -27,9 +29,21 @@ class Parser():
         '''
 
         if url == self.__current_url:return False
-
+        
         return [False, True][get_hostname(self.__current_url).replace('www', '') in  get_hostname(url).replace('www', '')]
     
+    def __is_a_sub_url(self, url):
+        p = urlparse(url)
+        if p.scheme != '' and p.hostname != '' and p.path == '':
+            return False
+        
+        feature = ['/', '&', '=', '?']
+        for f in feature:
+            if f in url:
+                return True
+
+        return False
+            
     def __is_contain_injection_character(self, url):
         '''
         To check whether the url contains '='
@@ -43,37 +57,43 @@ class Parser():
         return False
     
     def parse(self):
-        #print(self.__soup.title)
-        #logger.debug('Worker-%d, begin to parse page %s(host=%s)', self.__id, self.__current_url,self.__host)
-        #logger.debug('Worker-%d, urls=%d', self.__id,len(self.__soup.find_all('a')))
+        links = self.__soup.find_all('a')
+        logger.debug('Worker-%d, found %d URLs in page %s', self.__id, len(links), self.__current_url)
 
         index = 0
         # Find out all URLs from looping tags of 'a'
-        for link in self.__soup.find_all('a'):
+        for link in links:
             url = link.get('href')
-            logger.debug('Worker-%d, found %d url %s in page, checking...', self.__id, index, url)
-            index += 1
+            logger.debug('Worker-%d, found %d url %s in page, checking...', self.__id, ++index, url)
+
             need_continue = False
             # Check whether the host of this link is the target host
             if self.__is_a_module_of_current_url(url):
                 logger.debug('Worker-%d, found module url %s in page', self.__id, url)
                 need_continue = True
-                if self.__is_contain_injection_character(url):
-                    from .tasks import Injection
-                    injection = Injection(url)
-                    crawler.crawler_singleton.put_task(injection)
-
+            elif self.__is_a_sub_url(url):
+                logger.debug('Worker-%d, found sub url %s in page', self.__id, url)
+                need_continue = True
+                #url = get_hostname(self.__current_url) + url
+                p = urlparse(self.__current_url)
+                
+                temp_url = p.scheme+':\\' if p.scheme != '' else '' 
+                temp_url = temp_url+p.hostname+':'+p.port if p.port != '' else temp_url+p.hostname
+                temp_url = temp_url+url if url[0] = '/' else '/' + url
+                
+                url = temp_url
+                
             elif self.__is_target_host(url):
                 logger.debug('Worker-%d, found target url %s in page', self.__id, url)
                 need_continue = True
+                
+            if need_continue:
+                logger.debug('Worker-%d, Put message to dispatch for url %s.....', self.__id, url)
+                crawler.crawler_singleton.put_message(url)
+                
                 if self.__is_contain_injection_character(url):
                     from .tasks import Injection
                     injection = Injection(url)
                     crawler.crawler_singleton.put_task(injection)
-
-            if need_continue:
-                logger.debug('Worker-%d, Put message to dispatch for url %s.....', self.__id, url)
-                #from .tasks import HTMLRequest
-                #r = HTMLRequest(url)
-                #crawler.crawler_singleton.put_task(r)
-                crawler.crawler_singleton.put_message(url)
+            else:
+                logger.debug('Worker-%d, No need to do more for url %s', url)

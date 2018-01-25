@@ -53,7 +53,7 @@ class TaskFactory(object):
     @abstractmethod
     def manager(self):
         '''
-        Define the work flow to pre-process all the Tasks before put them into the queue.
+        To manage the tasks.
         '''
         pass
         

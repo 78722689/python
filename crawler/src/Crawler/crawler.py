@@ -5,27 +5,32 @@ class CrawlerFactory(TaskFactory):
     def __init__(self):
         super().__init__()
 
+    # Dispatch tasks
     def manager(self):
-        # Save all requested URLs
-        requested_urls = {}
-
-        while True:
-            msg = self.wait_for_message()
-            logger.debug('received message %s', msg)
-
-            if requested_urls.get(msg) is not None:
-                logger.info('URL %s was requested in the past, skip it.', msg)
-                continue
-
-            requested_urls.update({msg:True})
-
-            logger.debug('URL is ok, %s', msg)
-
-            from .Tasks.tasks import HTMLRequest
-            r = HTMLRequest(msg)
-            self.put_task(r)
+        self.__dispatcher()
 
     def start_crawler(self, url):
         print('start')
+    
+    # Dispatch the tasks when HTTP request.
+    def __dispatcher(self):
+        # Save all requested URLs to avoid requesting it twice.
+        requested_urls = {}
+
+        while True:
+            url = self.wait_for_message()
+            logger.debug('received message %s', url)
+
+            if requested_urls.get(url) is not None:
+                logger.info('URL %s was requested in the past, skip it.', url)
+                continue
+
+            requested_urls.update({url:True})
+
+            logger.debug('URL is ok, %s', url)
+
+            from .Tasks.tasks import HTMLRequest
+            r = HTMLRequest(url)
+            self.put_task(r)
 
 crawler_singleton = CrawlerFactory()

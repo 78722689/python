@@ -54,4 +54,15 @@ if __name__ == '__main__':
     # and the class member var1 will be a common variable
     print('var_sample.var1=%s' % var_sample.var1)
     
+    
+    if 1==1:
+        x=5
+        if 2==2:
+            x += 1
+            if 3==3:
+                x +=100
+                print(x)
+            print(x)
+        print(x)
+    
  
