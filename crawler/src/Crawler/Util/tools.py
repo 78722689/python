@@ -1,23 +1,24 @@
 from urllib.parse import urlparse
 import socket
-import logging as logger
+import logging
 
 
 # To set log format, you can print the log to a file and console, and you can also disable/enable log here
-logger.basicConfig(level=logger.DEBUG,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename='/mnt/python/crawler/output/log.txt', #'E:\Programing\python\output\log.log'
                     filemode='w'
                     )
 # set up logging to console
-console = logger.StreamHandler()
-console.setLevel(logger.DEBUG)
+console = logging.StreamHandler()
+console.setLevel(logging.DEBUG)
 # set a format which is simpler for console use
-formatter = logger.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
 console.setFormatter(formatter)
 # add the handler to the root logger
-logger.getLogger('').addHandler(console)
+logging.getLogger('').addHandler(console)
+logger = logging.getLogger('')
 
 def get_host_ip(url):
     parts = urlparse(url)
