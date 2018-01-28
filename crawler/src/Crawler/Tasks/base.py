@@ -16,7 +16,7 @@ class TaskFactory(object):
     
     __metaclass__ = ABCMeta
     
-    def __init__(self, max_task_queue_size=1024, coroutine_number=1024, start=True):
+    def __init__(self, max_task_queue_size=1024*2, coroutine_number=1024*2, start=True):
         self.__manage_queue = Queue(max_task_queue_size)
         self.task_queue = Queue(max_task_queue_size)
         self.__coroutine_number = coroutine_number
@@ -45,7 +45,7 @@ class TaskFactory(object):
 
     def put_task(self, task):
         if isinstance(task, Task):
-            self.task_queue.put_nowait(task)
+            self.task_queue.put(task)
             #self.__manage_queue.put(task)
         else:
             raise Exception('Input task is not an instance of class Task.')
@@ -62,13 +62,13 @@ class TaskFactory(object):
 
         while True:
             logger.debug('worker-%d, is free currently.', id)
-            self.__free_workers += 1
+            #self.__free_workers += 1
             task = self.task_queue.get()
             logger.debug('worker-%d, received task [%s].', id, task.name)
-            logger.debug('Routine status, Free workers %d, Busy workers %d', self.__free_workers, (self.__coroutine_number - self.__free_workers))
+            #logger.debug('Routine status, Free workers %d, Busy workers %d', self.__free_workers, (self.__coroutine_number - self.__free_workers))
 
             #self.__sem.acquire()
-            self.__free_workers -= 1
+            #self.__free_workers -= 1
             #self.__sem.release()
 
             try:

@@ -10,8 +10,8 @@ from gevent.lock import BoundedSemaphore
 import urllib3
 
 class HTMLRequest(Task):
-    #http = urllib3.PoolManager(num_pools=(1024*2))
-    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024*2)
+    http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024)
+    #http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024*2)
     
     def __init__(self, url, host_ip=''):
         self.__url = url
@@ -109,7 +109,7 @@ class Injection(Task):
         if Injection.all_inject_target_urls.get(self.__url) is not None: return
 
         # Write url to file for further injection analysis
-        with open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f: #open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:
+        with open('E:\Programing\python\output\injection_urls.txt', 'a+') as f: #open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f:
             print(self.__url, file=f)
             f.flush()
 

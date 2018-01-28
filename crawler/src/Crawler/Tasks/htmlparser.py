@@ -34,7 +34,8 @@ class Parser():
     
     def __is_a_sub_url(self, url):
         p = urlparse(url)
-        if p.scheme != '' and p.hostname != '' and p.path == '':
+        logger.debug('%s %s %s', p.scheme, p.hostname, p.path)
+        if p.scheme != '' or p.hostname or p.path == '':
             return False
         
         feature = ['/', '&', '=', '?']
@@ -58,28 +59,31 @@ class Parser():
     
     def parse(self):
         links = self.__soup.find_all('a')
-        logger.debug('Worker-%d, found %d URLs in page %s', self.__id, len(links), self.__current_url)
+        #logger.debug('Worker-%d, Current url is %s', self.__id, self.__current_url)
+        logger.debug('Worker-%d, Found %d new URLs in current page(%s)', self.__id, len(links), self.__current_url)
 
         index = 0
         # Find out all URLs from looping tags of 'a'
         for link in links:
             url = link.get('href')
-            logger.debug('Worker-%d, found %d url %s in page, checking...', self.__id, ++index, url)
+            index += 1
+            logger.debug('Worker-%d, Checking %d url(%s).', self.__id, index, url)
 
             need_continue = False
             # Check whether the host of this link is the target host
             if self.__is_a_module_of_current_url(url):
-                logger.debug('Worker-%d, found module url %s in page', self.__id, url)
+                logger.debug('Worker-%d, get a module url %s', self.__id, url)
                 need_continue = True
             elif self.__is_a_sub_url(url):
-                logger.debug('Worker-%d, found sub url %s in page', self.__id, url)
+                logger.debug('Worker-%d, get a  sub url %s', self.__id, url)
                 need_continue = True
                 #url = get_hostname(self.__current_url) + url
                 p = urlparse(self.__current_url)
-                
-                temp_url = p.scheme+':\\' if p.scheme != '' else '' 
-                temp_url = temp_url+p.hostname+':'+p.port if p.port != '' else temp_url+p.hostname
-                temp_url = temp_url+url if url[0] = '/' else '/' + url
+
+                temp_url = p.scheme+'://' if p.scheme != '' else ''
+                temp_url = temp_url+p.hostname+':'+str(p.port) if p.port else temp_url+p.hostname
+                temp_url = temp_url+p.path[:p.path.rfind('/')] if p.path else temp_url
+                temp_url = temp_url+url if url[0] == '/' else temp_url + '/' + url
                 
                 url = temp_url
                 
@@ -96,4 +100,4 @@ class Parser():
                     injection = Injection(url)
                     crawler.crawler_singleton.put_task(injection)
             else:
-                logger.debug('Worker-%d, No need to do more for url %s', url)
+                logger.debug('Worker-%d, No need to do more for url %s', self.__id, url)
