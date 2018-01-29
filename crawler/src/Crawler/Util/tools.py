@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='E:\Programing\python\output\log.log', #'/mnt/python/crawler/output/log.txt'
+                    filename='/mnt/python/crawler/output/log.txt', #'E:\Programing\python\output\log.log'
                     filemode='w'
                     )
 # set up logging to console
@@ -36,3 +36,8 @@ def get_hostname(url):
     hostname = parts.hostname if parts.hostname is not None else ''
 
     return hostname
+
+def get_root_dirname():
+    import os
+    import sys
+    print(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))

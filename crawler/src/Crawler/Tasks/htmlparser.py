@@ -92,12 +92,12 @@ class Parser():
                 need_continue = True
                 
             if need_continue:
-                logger.debug('Worker-%d, Put message to dispatch for url %s.....', self.__id, url)
-                crawler.crawler_singleton.put_message(url)
+                logger.debug('Worker-%d, Put message to dispatch for url %s', self.__id, url)
+                crawler.factory.put_message(url)
                 
                 if self.__is_contain_injection_character(url):
                     from .tasks import Injection
                     injection = Injection(url)
-                    crawler.crawler_singleton.put_task(injection)
+                    crawler.factory.put_task(injection)
             else:
                 logger.debug('Worker-%d, No need to do more for url %s', self.__id, url)

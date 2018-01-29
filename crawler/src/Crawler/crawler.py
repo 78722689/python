@@ -33,4 +33,4 @@ class CrawlerFactory(TaskFactory):
             r = HTMLRequest(url)
             self.put_task(r)
 
-crawler_singleton = CrawlerFactory()
+factory = CrawlerFactory()

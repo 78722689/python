@@ -10,8 +10,8 @@ from gevent.lock import BoundedSemaphore
 import urllib3
 
 class HTMLRequest(Task):
-    http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024)
-    #http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024*2)
+    #http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024)
+    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
     
     def __init__(self, url, host_ip=''):
         self.__url = url
@@ -42,8 +42,8 @@ class HTMLRequest(Task):
         
     def __job_handler(self, id):
         try:
-            header = {'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}
-            with HTMLRequest.http.request('GET', self.__url, headers=header, timeout = 20, redirect=False, preload_content=False, decode_content=True) as r:
+            header = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
+            with HTMLRequest.http.request('GET', self.__url, headers=header, timeout = 20, redirect=True, preload_content=False, decode_content=True) as r:
                 logger.debug('Worker-%d, HTTP request status=%s', id, r.status)
 
                 if r.status != 200:
@@ -51,7 +51,7 @@ class HTMLRequest(Task):
                     return
                 
                 task = PageHandler(self.__byte_2_str(r.data, [r.headers['content-type'].split('charset=')[1]]), self.__host_ip, self.__url)
-                crawler_singleton.put_task(task)
+                factory.put_task(task)
         except Exception as err:
             logger.debug('Worker-%d, request to url(%s) fail, %s', id, self.__url, err)
 
@@ -109,7 +109,7 @@ class Injection(Task):
         if Injection.all_inject_target_urls.get(self.__url) is not None: return
 
         # Write url to file for further injection analysis
-        with open('E:\Programing\python\output\injection_urls.txt', 'a+') as f: #open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f:
+        with open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f: #open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:
             print(self.__url, file=f)
             f.flush()
 
