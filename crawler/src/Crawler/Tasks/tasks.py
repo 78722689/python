@@ -1,11 +1,9 @@
-import time
-#from Crawler.Tasks.base import Task
 
-from Crawler.crawler import crawler_singleton
+from Crawler.crawlerfactory import factory
 from Crawler.Util.tools import *
 from Crawler.Tasks.htmlparser import Parser
 from .base import Task
-from gevent.lock import BoundedSemaphore
+#from gevent.lock import BoundedSemaphore
 
 import urllib3
 
@@ -82,12 +80,6 @@ class PageHandler(Task):
         logger.debug('Worker-%d, parse %s is done', id, self.__url)
 
 class Injection(Task):
-    # Save the injection URLs in dictionary so that it will not be written to file twice.
-    # {url:True}
-    all_inject_target_urls = {}
-
-    sem = BoundedSemaphore(1)
-
     def __init__(self, url):
         self.__name = 'Injectction'
         self.__url = url
@@ -106,11 +98,7 @@ class Injection(Task):
         return self.__job_handler
 
     def __job_handler(self, id):
-        if Injection.all_inject_target_urls.get(self.__url) is not None: return
-
         # Write url to file for further injection analysis
-        with open('/mnt/python/crawler/output/injection_urls.txt', 'a+') as f: #open('E:\Programing\python\output\injection_urls.txt', 'a+') as f:
+        with open(get_root_path() + 'output/injection_urls.txt', 'a+') as f:
             print(self.__url, file=f)
             f.flush()
-
-        Injection.all_inject_target_urls.update({self.__url:True})

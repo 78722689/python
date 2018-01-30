@@ -1,26 +1,13 @@
 from urllib.parse import urlparse
 import socket
 import logging
-
-
-# To set log format, you can print the log to a file and console, and you can also disable/enable log here
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='/mnt/python/crawler/output/log.txt', #'E:\Programing\python\output\log.log'
-                    filemode='w'
-                    )
-# set up logging to console
-console = logging.StreamHandler()
-console.setLevel(logging.DEBUG)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
-console.setFormatter(formatter)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
-logger = logging.getLogger('')
+import os
+import sys
 
 def get_host_ip(url):
+    '''
+    Return the IP address by giving URL
+    '''
     parts = urlparse(url)
     if parts.hostname is not None:
         try:
@@ -32,12 +19,33 @@ def get_host_ip(url):
     return ''
 
 def get_hostname(url):
+    '''
+    Return hostname by giving URL
+    '''
     parts = urlparse(url)
     hostname = parts.hostname if parts.hostname is not None else ''
 
     return hostname
 
-def get_root_dirname():
-    import os
-    import sys
-    print(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)))
+def get_root_path():
+    '''
+    Return the project root path
+    '''
+    return os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)).replace('src', '')
+    
+# To set log format, you can print the log to a file and console, and you can also disable/enable log here
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename=get_root_path() + 'output/log.txt',
+                    filemode='w'
+                    )
+# set up logging to console
+console = logging.StreamHandler()
+console.setLevel(logging.DEBUG)
+# set a format which is simpler for console use
+formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+console.setFormatter(formatter)
+# add the handler to the root logger
+logging.getLogger('').addHandler(console)
+logger = logging.getLogger('')

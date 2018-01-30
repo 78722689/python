@@ -1,14 +1,18 @@
 from bs4 import BeautifulSoup as bs
 from Crawler.Util.tools import *
-from Crawler import crawler
+from Crawler.crawlerfactory import factory
 from urllib.parse import urlparse
 
 class Parser():
-    def __init__(self, id, page, host, url):
+    '''
+    Parse the HTML content by giving page
+    '''
+    
+    def __init__(self, id, page_content, host_ip, current_url):
         self.__id = id
-        self.__soup = bs(page, 'lxml')
-        self.__host = host
-        self.__current_url = url
+        self.__soup = bs(page_content, 'lxml')
+        self.__host = host_ip
+        self.__current_url = current_url
 
     def __is_target_host(self, url):
         '''
@@ -34,7 +38,7 @@ class Parser():
     
     def __is_a_sub_url(self, url):
         p = urlparse(url)
-        logger.debug('%s %s %s', p.scheme, p.hostname, p.path)
+
         if p.scheme != '' or p.hostname or p.path == '':
             return False
         
@@ -60,14 +64,14 @@ class Parser():
     def parse(self):
         links = self.__soup.find_all('a')
         #logger.debug('Worker-%d, Current url is %s', self.__id, self.__current_url)
-        logger.debug('Worker-%d, Found %d new URLs in current page(%s)', self.__id, len(links), self.__current_url)
+        logger.debug('Worker-%d, Found the %d new URLs in current page(%s)', self.__id, len(links), self.__current_url)
 
         index = 0
         # Find out all URLs from looping tags of 'a'
         for link in links:
             url = link.get('href')
             index += 1
-            logger.debug('Worker-%d, Checking %d url(%s).', self.__id, index, url)
+            logger.debug('Worker-%d, Checking NO.%d URL(%s).', self.__id, index, url)
 
             need_continue = False
             # Check whether the host of this link is the target host
@@ -93,11 +97,11 @@ class Parser():
                 
             if need_continue:
                 logger.debug('Worker-%d, Put message to dispatch for url %s', self.__id, url)
-                crawler.factory.put_message(url)
+                factory.put_message(url)
                 
                 if self.__is_contain_injection_character(url):
                     from .tasks import Injection
                     injection = Injection(url)
-                    crawler.factory.put_task(injection)
+                    factory.put_task(injection)
             else:
                 logger.debug('Worker-%d, No need to do more for url %s', self.__id, url)

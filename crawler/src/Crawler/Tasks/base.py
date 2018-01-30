@@ -16,7 +16,7 @@ class TaskFactory(object):
     
     __metaclass__ = ABCMeta
     
-    def __init__(self, max_task_queue_size=1024*2, coroutine_number=1024*2, start=True):
+    def __init__(self, max_task_queue_size=1024, coroutine_number=1, start=True):
         self.__manage_queue = Queue(max_task_queue_size)
         self.task_queue = Queue(max_task_queue_size)
         self.__coroutine_number = coroutine_number
@@ -41,6 +41,7 @@ class TaskFactory(object):
         return msg
 
     def put_message(self, msg):
+        
         self.__manage_queue.put(msg)
 
     def put_task(self, task):
