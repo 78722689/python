@@ -33,8 +33,8 @@ class Parser():
         '''
 
         if url == self.__current_url:return False
-        
-        return [False, True][get_hostname(self.__current_url).replace('www', '') in  get_hostname(url).replace('www', '')]
+        hostname = get_hostname(self.__current_url)
+        return [False, True][hostname != '' and hostname.replace('www', '') in  get_hostname(url).replace('www', '')]
     
     def __is_a_sub_url(self, url):
         p = urlparse(url)
