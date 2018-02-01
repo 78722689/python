@@ -19,7 +19,7 @@ class HTMLRequest(Task):
 
     def __format_url(self, url):
         url = 'http://' + url if url[:4] != 'http' else url
-        url = url[:7] + 'www.' + url[7:] if url[7:11] != 'www.' else url
+        #url = url[:7] + 'www.' + url[7:] if url[7:11] != 'www.' else url
 
         return url
 
@@ -55,7 +55,7 @@ class HTMLRequest(Task):
                     return
 
                 headers = r.headers['content-type'].split('charset=')
-                charset = headers[1] if len(headers) == 2 else []
+                charset = [headers[1]] if len(headers) == 2 else []
 
                 task = PageHandler(self.__byte_2_str(r.data,charset), self.__host_ip, self.__url)
                 factory.put_task(task)

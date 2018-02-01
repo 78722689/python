@@ -70,6 +70,9 @@ class Parser():
         # Find out all URLs from looping tags of 'a'
         for link in links:
             url = link.get('href')
+            if url is None: continue
+            url = url.strip().replace('\n', '')
+
             index += 1
             logger.debug('Worker-%d, Checking NO.%d URL(%s).', self.__id, index, url)
 
@@ -86,7 +89,8 @@ class Parser():
 
                 temp_url = p.scheme+'://' if p.scheme != '' else ''
                 temp_url = temp_url+p.hostname+':'+str(p.port) if p.port else temp_url+p.hostname
-                temp_url = temp_url+p.path[:p.path.rfind('/')] if p.path else temp_url
+
+                #temp_url = temp_url + p.path[:p.path.rfind('/')] if p.path else temp_url
                 temp_url = temp_url+url if url[0] == '/' else temp_url + '/' + url
                 
                 url = temp_url
