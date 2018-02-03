@@ -8,13 +8,14 @@ from Crawler.Util.tools import logger
 
 class CrawlerFactory(TaskFactory):
     def __init__(self):
-        super().__init__()
+        super().__init__(start=False)
 
     # Dispatch tasks
     def manager(self):
         self.__dispatcher()
 
-    def start_crawler(self, url):
+    def start_crawler(self, url, coroutine_num):
+        self.start(coroutine_num, coroutine_num)
         self.put_message(url)
         
         while True:

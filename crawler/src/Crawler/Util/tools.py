@@ -32,20 +32,57 @@ def get_root_path():
     Return the project root path
     '''
     return os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)).replace('src', '')
-    
-# To set log format, you can print the log to a file and console, and you can also disable/enable log here
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename=get_root_path() + 'output/log.txt',
-                    filemode='w'
-                    )
-# set up logging to console
-console = logging.StreamHandler()
-console.setLevel(logging.DEBUG)
-# set a format which is simpler for console use
-formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
-console.setFormatter(formatter)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
-logger = logging.getLogger('')
+
+class MyLogger():
+    def __init__(self):
+        self.__logger = logging.getLogger('')
+
+    def debug(self, msg, *args, **kwargs):
+        self.__logger.debug(msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        self.__logger.info(msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        self.__logger.warning(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        self.__logger.error(msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        self.__logger.critical(msg, *args, **kwargs)
+
+    def set(self, file='', level=1):
+        if file == '.' or file == '':
+            file = get_root_path() + 'output/log.txt'
+
+        if level == 1:
+            level = logging.DEBUG
+        elif level == 2:
+            level = logging.INFO
+        elif level == 3:
+            level = logging.WARNING
+        elif level == 4:
+            level = logging.ERROR
+        elif level == 5:
+            level = logging.CRITICAL
+        else:
+            level = logging.DEBUG
+
+        # To set log format, you can print the log to a file and console, and you can also disable/enable log here
+        logging.basicConfig(level = level,
+                            format = '%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                            datefmt = '%a, %d %b %Y %H:%M:%S',
+                            filename = file,
+                            filemode = 'w+'
+                            )
+        # set up logging to console
+        console = logging.StreamHandler()
+        console.setLevel(level)
+        # set a format which is simpler for console use
+        formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+        console.setFormatter(formatter)
+        # add the handler to the root logger
+        logging.getLogger('').addHandler(console)
+
+logger = MyLogger()

@@ -17,34 +17,42 @@ class TaskFactory(object):
     __metaclass__ = ABCMeta
     
     def __init__(self, max_task_queue_size=1024, coroutine_number=1024, start=True):
-        self.__manage_queue = Queue(max_task_queue_size)
-        self.task_queue = Queue(max_task_queue_size)
-        self.__coroutine_number = coroutine_number
-        self.__free_workers = 0
-        self.__sem = BoundedSemaphore(1)
+        self.__manage_queue = None
+        self.task_queue = None
 
         if start:
-            self.start()
+            self.start(max_task_queue_size, coroutine_number)
            
     # Start worker routines
-    def start(self):
+    def start(self, queue_size, routine_num):
+        self.__manage_queue = Queue(queue_size)
+        self.task_queue = Queue(queue_size)
+        #self.__coroutine_number = routine_num
+
         # DONT JOIN below routines.
         # It will cause 'gevent join block forever', because all the routines will be in waiting when queue.get(),
         # and no more available routines can be switched when gevent scheduling.
         # SO, if you have others routine in implementation and it will not in waiting to ensure gevent schedule successfully, you can join the following routines here.
         # Or, no join here but sleep in main routine to ensure the following routines finishing its job.
         gevent.spawn(self.manager)
-        [gevent.spawn(self.worker, i) for i in range(self.__coroutine_number)]
+        [gevent.spawn(self.worker, i) for i in range(routine_num)]
 
     def wait_for_message(self):
         msg = self.__manage_queue.get()
         return msg
 
     def put_message(self, msg):
-        
+        if self.__manage_queue is None:
+            logger.error('Manage queue did not create yet.')
+            return
+
         self.__manage_queue.put(msg)
 
     def put_task(self, task):
+        if self.task_queue is None:
+            logger.error('Task queue did not create yet.')
+            return
+
         if isinstance(task, Task):
             self.task_queue.put(task)
             #self.__manage_queue.put(task)
