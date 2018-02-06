@@ -19,7 +19,7 @@ def byte_2_str(data, encoding=[]):
             logger.error('Decoding content fail.')
     
     
-url = 'http://www.baidu.com/s?wd=inur:asp?=&rsv_spt=1&rsv_bp=0&ie=utf-8&tn=baiduhome_pg' #&pn=1
+url = 'http://www.baidu.com/s?wd=inurl:asp?id=&rsv_spt=1&rsv_bp=0&ie=utf-8&tn=baiduhome_pg' #&pn=1
 header = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
 with http.request('GET', url, headers=header, timeout = 20, preload_content=False, decode_content=True) as resp:
     #print(resp.status)
@@ -31,18 +31,19 @@ with http.request('GET', url, headers=header, timeout = 20, preload_content=Fals
     soup = bs(page, 'lxml')
     links = soup.find_all('a')
     for link in links:
-        if link.get('data-click') is None: continue
+        if link.get('data-click') is None or link.get('data-click') == '': continue
         target_url = link.get('href')
         if target_url is not None and 'link?url=' in target_url:
             print('found url %s' % target_url)
-            with http.request('GET', target_url, headers=header, timeout = 20, redirect=True, preload_content=False, decode_content=True) as resp:
+            with http.request('GET', target_url, headers=header, timeout = 20, redirect=False, preload_content=False, decode_content=True) as resp:
                 #if resp.status != 200: continue
-                print(resp.headers)
-                with open('d:/baidu.html', 'w+') as f:
-                    content = byte_2_str(resp.data, ['gb2312'])
-                    print(content, file=f)
+                print(resp.headers.get('location'))
+                #print('redirect=%s' % resp.geturl())
+                #with open('d:/baidu.html', 'w+') as f:
+                #    content = byte_2_str(resp.data, ['gb2312'])
+                #    print(content, file=f)
 
-                break
+                #break
 
             #break
             
