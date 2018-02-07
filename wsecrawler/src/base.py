@@ -6,8 +6,10 @@ import gevent
 from gevent.queue import Queue
 from gevent.lock import BoundedSemaphore
 from abc import ABC, ABCMeta, abstractmethod
-from Crawler.Util.tools import logger
+import logging
 import time
+
+logger = logging.getLogger('')
 
 class TaskFactory(object):
     '''
@@ -43,14 +45,14 @@ class TaskFactory(object):
 
     def put_message(self, msg):
         if self.__manage_queue is None:
-            logger.error('Manage queue did not create yet.')
+            #logger.error('Manage queue did not create yet.')
             return
 
         self.__manage_queue.put(msg)
 
     def put_task(self, task):
         if self.task_queue is None:
-            logger.error('Task queue did not create yet.')
+            #logger.error('Task queue did not create yet.')
             return
 
         if isinstance(task, Task):
