@@ -5,8 +5,8 @@ from .tools import logger, get_root_path
 import urllib3
 
 class HttpBase():
-    http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024)
-    #http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
+    #http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024)
+    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
     
     def __init__(self):
         pass
@@ -25,7 +25,7 @@ class Baidu(Task, HttpBase):
         pagenum = pagenum*10+1
         self.__search_url = 'http://www.baidu.com/s?wd=%(keyword)s&rsv_spt=1&rsv_bp=0&ie=utf-8&tn=baiduhome_pg&pn=%(pagenum)d' % vars()
         self.__name = 'Baidu,' + self.__search_url
-        self.__timeout = 20
+        self.__timeout = 40
 
     def __format_url(self, url):
         url = 'http://' + url if url[:4] != 'http' else url
