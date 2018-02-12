@@ -27,11 +27,6 @@ class Baidu(Task, HttpBase):
         self.__name = 'Baidu,' + self.__search_url
         self.__timeout = 40
 
-    def __format_url(self, url):
-        url = 'http://' + url if url[:4] != 'http' else url
-
-        return url
-
     @property
     def name(self):
         return self.__name
@@ -60,7 +55,7 @@ class Baidu(Task, HttpBase):
                 charset = [headers[1]] if len(headers) == 2 else []
 
                 from .wsecrawlerfactory import factory
-                factory.put_task(Parser(self.byte_2_str(r.data, charset)))
+                factory.put_task(Parser(self.byte_2_str(r.data, charset), self.__search_url))
         except Exception as err:
             logger.error('Worker-%d, request to url(%s) fail, %s', id, self.__search_url, err)
 
@@ -68,7 +63,7 @@ class FetchURL(Task, HttpBase):
     def __init__(self, url):
         self.__url = url
         self.__name = 'FetchURL,' + url
-        self.__timeout = 20
+        self.__timeout = 40
         
     @property
     def name(self):
@@ -119,9 +114,10 @@ class Output(Task):
         Output.file.flush()
 
 class Parser(Task):
-    def __init__(self, html):
+    def __init__(self, html, url):
         self.__html = html
-        self.__name = 'Parser'
+        self.__name = 'Parser,' + url
+        self.__timeout = 10
 
     @property
     def name(self):
@@ -129,14 +125,14 @@ class Parser(Task):
 
     @property
     def timeout(self):
-        pass
+        return self.__timeout
 
     @property
     def job(self):
         return self.__job_handler
 
     def __job_handler(self, id):
-        logger.debug('Parser entry')
+        logger.debug('Worker-%d, Parser entry', id)
         from bs4 import BeautifulSoup as bs
         soup = bs(self.__html, 'lxml')
         links = soup.find_all('a')
@@ -144,5 +140,6 @@ class Parser(Task):
             if link.get('data-click') is None or link.get('data-click') == '': continue
             target_url = link.get('href')
             if target_url is not None and 'link?url=' in target_url:
+                logger.debug('worker-%d, Found link %s', id, target_url)
                 from .wsecrawlerfactory import factory
                 factory.put_task(FetchURL(target_url))
