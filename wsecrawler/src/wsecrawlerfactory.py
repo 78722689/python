@@ -2,7 +2,7 @@ import gevent
 import gevent.monkey
 gevent.monkey.patch_all()
 import time
-
+import urllib
 from .base import TaskFactory
 from .tasks import Baidu
 
@@ -18,6 +18,7 @@ class WSECrawlerFactory(TaskFactory):
         self.start(coroutine_num, coroutine_num)
         
         for keyword in keywords:
+            keyword = urllib.parse.quote(keyword)
             for pn in range(page_num):
                 self.put_task(Baidu(keyword, pn))
         

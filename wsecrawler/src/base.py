@@ -61,6 +61,9 @@ class TaskFactory(object):
         else:
             raise Exception('Input task is not an instance of class Task.')
     
+    def stop(self):
+        pass
+    
     @abstractmethod
     def manager(self):
         '''
@@ -69,19 +72,13 @@ class TaskFactory(object):
         pass
         
     def worker(self, id):
-        #print('woker-%d started' % id)
-
         while True:
             logger.debug('worker-%d, is free currently.', id)
-            #self.__free_workers += 1
             task = self.task_queue.get()
             logger.debug('worker-%d, received task [%s].', id, task.name)
-            #logger.debug('Routine status, Free workers %d, Busy workers %d', self.__free_workers, (self.__coroutine_number - self.__free_workers))
-
-            #self.__sem.acquire()
-            #self.__free_workers -= 1
-            #self.__sem.release()
-
+            
+            if task.name == 'stop': break
+            
             try:
                 t = gevent.spawn(self.__run, id, task)
                 t.join(task.timeout)
@@ -156,6 +153,20 @@ class Task(ABC):
         value: function(id)
         '''
         pass
+
+class Stop(Task):
+    def __init__(self):
+        self.__name = 'stop'
+        self.__timeout = 0
+    
+    @property
+    def name(self):
+        return self.__name
+        
+    @name.setter
+    def name(self, value):
+        self.__name = value
+        
 
 class NewTask(Task):
     def __init__(self):
