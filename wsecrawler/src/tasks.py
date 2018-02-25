@@ -5,8 +5,8 @@ from .tools import logger, get_root_path
 import urllib3
 
 class HttpBase():
-    #http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024)
-    http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
+    http = urllib3.PoolManager(num_pools=(1024*3), maxsize=1024*5)
+    #http = urllib3.ProxyManager('http://10.144.1.10:8080/', maxsize=1024)
     
     def __init__(self):
         pass
@@ -84,11 +84,11 @@ class FetchURL(Task, HttpBase):
             with FetchURL.http.request('GET',  self.__url, headers=header, timeout=self.__timeout, redirect=False, preload_content=False, decode_content=True) as resp:
                 # if resp.status != 200: continue
                 url = resp.headers.get('location')
-                logger.info('real url is %s', resp.headers.get('location'))
+                logger.info('Worker-%d, %s real url is %s',id, self.__url, resp.headers.get('location'))
                 from .wsecrawlerfactory import factory
                 factory.put_task(Output(url))
         except Exception as err:
-            logger.error('Worker-%d, request to url(%s) fail, %s', id, self.__url, err)
+            logger.error('Worker-%d, request to url(%s) fail, %s', id,  self.__url, err)
 
 class Output(Task):
     file = open(get_root_path()+'/output/result.txt', 'w+')

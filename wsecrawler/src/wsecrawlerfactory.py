@@ -15,12 +15,13 @@ class WSECrawlerFactory(TaskFactory):
         super().__init__(start=False)
 
     def start_crawler(self, keywords, page_num, coroutine_num, engine=BAIDU):
-        self.start(coroutine_num, coroutine_num)
+        self.start(100, coroutine_num)
         
         for keyword in keywords:
             keyword = urllib.parse.quote(keyword)
             for pn in range(page_num):
                 self.put_task(Baidu(keyword, pn))
+                time.sleep(1)
         
         while True:
             time.sleep(3)
