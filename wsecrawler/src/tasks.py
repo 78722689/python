@@ -22,7 +22,8 @@ class HttpBase():
                 
 class Baidu(Task, HttpBase):
     def __init__(self, keyword, pagenum=1):
-        pagenum = pagenum*10+1
+        pagenum = pagenum*10
+        self.__pagenum = pagenum
         self.__search_url = 'http://www.baidu.com/s?wd=%(keyword)s&rsv_spt=1&rsv_bp=0&ie=utf-8&tn=baiduhome_pg&pn=%(pagenum)d' % vars()
         self.__name = 'Baidu,' + self.__search_url
         self.__timeout = 40
@@ -55,7 +56,7 @@ class Baidu(Task, HttpBase):
                 charset = [headers[1]] if len(headers) == 2 else []
 
                 from .wsecrawlerfactory import factory
-                factory.put_task(Parser(self.byte_2_str(r.data, charset), self.__search_url))
+                factory.put_task(Parser(self.byte_2_str(r.data, charset), self.__search_url, self.__pagenum))
         except Exception as err:
             logger.error('Worker-%d, request to url(%s) fail, %s', id, self.__search_url, err)
 
@@ -114,10 +115,11 @@ class Output(Task):
         Output.file.flush()
 
 class Parser(Task):
-    def __init__(self, html, url):
+    def __init__(self, html, url, pn):
         self.__html = html
         self.__name = 'Parser,' + url
         self.__timeout = 10
+        self.__pagenumber= pn
 
     @property
     def name(self):
@@ -134,12 +136,21 @@ class Parser(Task):
     def __job_handler(self, id):
         logger.debug('Worker-%d, Parser entry', id)
         from bs4 import BeautifulSoup as bs
+
         soup = bs(self.__html, 'lxml')
+        pn = soup.find_all("span", "pc")
+        if len(pn) <= 0:
+            logger.error('Worker-%d, %s Did not find the page count in page %d, skip it', id, self.__name, self.__pagenumber)
+            return
+        if self.__pagenumber > 10 and pn[0].get_text() == '1':
+            logger.warn('Worker-%d,%s Page %d do not have the content, skip it.', id, self.__name, self.__pagenumber)
+            return
+
         links = soup.find_all('a')
         for link in links:
             if link.get('data-click') is None or link.get('data-click') == '': continue
             target_url = link.get('href')
             if target_url is not None and 'link?url=' in target_url:
-                logger.debug('worker-%d, Found link %s', id, target_url)
+                logger.debug('Worker-%d, Found link %s', id, target_url)
                 from .wsecrawlerfactory import factory
                 factory.put_task(FetchURL(target_url))

@@ -6,10 +6,11 @@ import gevent
 from gevent.queue import Queue
 from gevent.lock import BoundedSemaphore
 from abc import ABC, ABCMeta, abstractmethod
-import logging
+#import logging
+from src.tools import logger
 import time
 
-logger = logging.getLogger('')
+#logger = logging.getLogger('')
 
 class TaskFactory(object):
     '''

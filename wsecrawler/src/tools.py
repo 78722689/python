@@ -36,7 +36,7 @@ def get_root_path():
 class MyLogger():
     def __init__(self):
         self.__logger = logging.getLogger('')
-        self.set()
+        #self.set()
 
     def debug(self, msg, *args, **kwargs):
         self.__logger.debug(msg, *args, **kwargs)
