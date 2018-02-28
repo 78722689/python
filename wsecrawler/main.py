@@ -33,5 +33,5 @@ if __name__ == '__main__':
     
     from src.wsecrawlerfactory import factory
     #factory.start_crawler(['inurl:asp?id=','inurl:product.php?id=', 'inurl:readnews.php?id='], 2, 100)
-    factory.start_crawler(args.keywords.split(';'), args.number, args.number*15)
+    factory.start_crawler(args.keywords.split(';'), args.number, args.number*10)
     #factory.start_crawler(['inurl:jsp?id='], 30, 100)

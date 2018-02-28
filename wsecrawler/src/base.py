@@ -155,6 +155,10 @@ class Task(ABC):
         '''
         pass
 
+    @abstractmethod
+    def done(self):
+        pass
+
 class Stop(Task):
     def __init__(self):
         self.__name = 'stop'
