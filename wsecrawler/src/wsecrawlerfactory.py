@@ -47,7 +47,7 @@ class WSECrawlerFactory(TaskFactory):
             keyword = urllib.parse.quote(keyword)
             for pn in range(page_num):
                 engine = Baidu(keyword, pn)
-                engine.job(pn)
+                engine.request(pn)
         
         while not self.__exit:
             time.sleep(3)
